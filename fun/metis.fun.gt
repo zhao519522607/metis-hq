@@ -1,0 +1,153 @@
+Trantemp=/data/.temp/metis
+
+if [ -z "$1" ]
+then
+    echo "Request argument"
+    log warn "Request argument, program terminated"
+    ftmp delete
+    exit 1
+fi 
+
+Cleartmp(){
+    ftmp delete
+}
+
+gt_mg_exec(){
+    db_exec "select * from $DB_TSrv where EIP='$ServerIP' or IP='$ServerIP'" > $srv_info
+    sed -i 's/NULL/-/g' $srv_info
+    log info "Check server information of $ServerIP"
+	Check file empty $srv_info "Error: No results found"
+    echo -e "\033[1mHost information of \033[34m$ServerIP\033[0m:"
+    CPUCORE="`awk '{print $7}' $srv_info` Cores"
+    MEMSIZE="`awk '{print $8}' $srv_info`G"
+	
+    python -c "print '-' * 40"
+    printf "\033[1m%16s\033[0m: %-30s\n" "ID"               "`awk '{print $1}' $srv_info`" 
+    printf "\033[1m%16s\033[0m: %-30s\n" "EIP"              "`awk '{print $2}' $srv_info`" 
+    printf "\033[1m%16s\033[0m: %-30s\n" "IP"               "`awk '{print $3}' $srv_info`" 
+    printf "\033[1m%16s\033[0m: %-30s\n" "Port"             "`awk '{print $4}' $srv_info`" 
+    printf "\033[1m%16s\033[0m: %-30s\n" "Hostname"         "`awk '{print $5}' $srv_info`" 
+    printf "\033[1m%16s\033[0m: %-30s\n" "Login_users"      "`awk '{print $6}' $srv_info`" 
+    printf "\033[1m%16s\033[0m: %-30s\n" "CPU_Core"         "$CPUCORE" 
+    printf "\033[1m%16s\033[0m: %-30s\n" "Mem_Size"         "$MEMSIZE"  
+}
+
+gt_db_query(){
+    db_exec "set @myrow = 0;select (@myrow := @myrow + 1) as ID,EIP,IP,Hostname,Port,Login_users from $DB_TSrv where concat(IP,Hostname) like '%$Keywords%' and (EIP like '%$Keywords%' or IP like '%$Keywords%' or Hostname like '%$Keywords%')" > $mth_auth
+    Check file empty $mth_auth "Search: $Keywords: No results found"
+}
+
+gt_db_search(){
+    gt_db_query
+    while read ID EIP IP Hostname SSHDPORT Login_users
+    do
+        if [ "$Login_users" = "nologin" ]
+        then
+            SSHDPORT="HiLi:$SSHDPORT"
+            echo "$ID $EIP $IP $Hostname $SSHDPORT $Login_users" >> $keymatch
+        else
+            echo "$ID $EIP $IP $Hostname $SSHDPORT" $Login_users >> $keymatch
+        fi
+    done <   $mth_auth
+    Del_file $mth_auth
+}
+
+gt_print_results(){
+    hastitle=0
+    PrintColor=37
+    while read ID EIP IP Hostname SSHDPORT
+    do 
+        test "$EIP"      = NULL &&	EIP="-" 
+        test "$IP"       = NULL &&  IP="-"
+        test "$Hostname" = NULL &&  Hostname="-"
+
+        if [ "`echo $SSHDPORT | awk -F ':' '{print $1}'`" = "HiLi" ]
+        then
+            HigLight=0
+            SSHDPORT=`echo $SSHDPORT | awk -F ':' '{print $2}'`
+        else
+            HigLight=1
+        fi 
+        
+        Printwidth="`awk '{print $1,$2,$3,$4,$5}' $keymatch | Stringetmax`"
+        if [ "$HigLight" = 0 ]
+        then
+            Print_umw -num "$Printwidth" -str "$ID" "$EIP" "$IP" "$Hostname" -tle 0 -col '31'
+        else
+            if [ $hastitle = 0 ]
+            then
+                Print_umw -num "$Printwidth" -str "$ID" "$EIP" "$IP" "$Hostname" -tle 0 -col '4;1;44'
+                hastitle=1
+            else
+                if [ $PrintColor = 37 ]
+                then
+                    PrintColor=39
+                else
+                    PrintColor=37
+                fi 
+                Print_umw -num "$Printwidth" -str "$ID" "$EIP" "$IP" "$Hostname" -tle 0 -col "$PrintColor"
+            fi 
+        fi
+    done < $keymatch
+}
+
+gt_srvinfo(){
+    grep "^$usr_input" $keymatch | head -1 > $usr_chio
+    grep -q 'HiLi' $usr_chio 
+    Returncode=$?
+    if [ $Returncode = 0 ]
+    then
+        ftmp delete
+        echo -e "\n\033[1;41mAttention\033[0m: Dear \033[1m$SERVUSER\033[0m, you do not have permission to access the requested server('ID: $usr_input')"
+        if [ "$Rangenum" = "$usr_input" ]
+        then
+            inputorauto=auto-identified
+        else
+            inputorauto=user-input 
+        fi 
+        log auth "Attention: Dear $SERVUSER, you do not have permission to access the requested server(ID $usr_input of $Rangenum: $inputorauto)"
+        exit 1
+    fi
+    if [ -z "$Keywords" ]
+    then
+        MATCHCOL=0
+    else
+        #MATCHCOL="`cat $usr_chio | Stringmthcol $Keywords | head -1`"
+		MATCHCOL=3
+    fi
+    if [ "$MATCHCOL" -gt 1 ] && [ "$MATCHCOL" -lt 5 ]
+    then
+        true
+    else
+        Range=3
+        while true
+        do 
+            if [ "`awk '{print $'$Range'}' $usr_chio`" != NULL ]
+            then
+                MATCHCOL=$Range
+                break
+            else
+                echo $((Range++)) > /dev/null
+            fi 
+        done
+    fi 
+    SERVIPAD="`awk '{print $'$MATCHCOL'}' $usr_chio | head -1`"
+    SERVPORT="`awk '{print $5}' $usr_chio | head -1`"
+    SERVNAME="`awk '{print $4}' $usr_chio | head -1`"
+	SERVUSER="`awk '{print $6}' $usr_chio | head -1`"
+    Del_file $keymatch $usr_chio
+}
+gt_getsrv(){
+    gt_db_search
+    Check file empty $keymatch "Error: Search $Keywords: No results found"
+    if [ "`cat $keymatch | sed '1d' | wc -l`" -gt 1 ]
+    then
+        echo "Error: $Keywords: Too many results, use the more accurate keyword"
+        ftmp delete
+        log error "Error: $Keywords: Too many results, use the more accurate keyword"
+        exit 1
+    fi
+    usr_input=1
+    gt_srvinfo
+    ftmp delete
+}
