@@ -134,7 +134,12 @@ gt_srvinfo(){
     SERVIPAD="`awk '{print $'$MATCHCOL'}' $usr_chio | head -1`"
     SERVPORT="`awk '{print $5}' $usr_chio | head -1`"
     SERVNAME="`awk '{print $4}' $usr_chio | head -1`"
-	SERVUSER="`awk '{print $6}' $usr_chio | head -1`"
+    if [ -n "$Username" ]
+    then
+        SERVUSER=$Username
+    else
+        SERVUSER="`awk '{print $6}' $usr_chio | head -1`"
+    fi
     Del_file $keymatch $usr_chio
 }
 gt_getsrv(){
