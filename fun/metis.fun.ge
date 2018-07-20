@@ -1,0 +1,147 @@
+Help() {
+	echo -n '''
+		-i,--info	IP
+                    显示指定IP的信息, 如CPU,内存,磁盘,端口,可登录用户,系统信息等
+                    需root权限
+                    示例:	gt -i 172.16.23.11
+		-s,--specified  Keyword
+				        指定一台服务器
+                        示例:	gt -s mail
+			            为其他操作指定服务器包含关键字mail
+						mail可以是IP或主机名,只要能在数据库中成功匹配到一台即可(大于1台则报错退出)
+		-k,--sshkey rsa
+					执行用户的私钥（私钥权限必须为600）
+					示例: gt -k my_rsa
+		-c,--cmd	Command
+                    在-s指定的主机上执行命令
+                    执行的命令带有参数时需把命令用双引号括起来
+                    示例:	gt -k my_rsa -s mail -c "uname -a"
+		-u,--upload     
+                    上传本地文件到指定服务器
+	                示例:	gt -k my_rsa -u /data/backup.tgz mail:/data/
+			        上传本地文件 /data/backup.tgz 到包含mail关键字的服务器/data/目录下
+		-d,--download
+					从服务器下载文件
+	                示例:	gt -k my_rsa -d server1:/data/acc.log /root/
+			        从 server1 下载 /data/acc.log 到 本地 /root/ 目录下
+		 -t,--transfer
+                    文件转发
+                    在A主机上下载B主机文件再上传到C主机
+					示例:	gt -k my_rsa -t server1:/file/name server2:/path/name
+		 -L,--List
+					获取主机列表
+		 -l,--list	Keyword(可选)
+                    查询/显示/登录/命令 
+                    示例:	gt -k my_rsa -l api
+			        列出全部匹配server的列表,支持模糊查询,不区分大小写,如结果只有1个则自动登录
+			        在列出的结果中:
+			                    输入左侧对应的ID并回车则立即登录;
+			                    输入c进入命令模式,可对列出的主机发送命令,等待10秒无输入则退出
+			                    输入其他字符则立即退出           
+	                备注:	-l 后未给参数则列出全部列表内容
+		'''
+}
+
+RTInput(){
+    stty cbreak -echo 2> /dev/null
+    dd if=/dev/tty bs=1 count=1 2> /dev/null
+    stty -cbreak echo 2> /dev/null
+}
+
+Printmsg(){
+    echo -e "$1"
+}
+
+GetlocalIP(){
+    ifconfig | grep 'inet addr:' | awk '{print $2}' | awk -F ':' '{print $2}' | sed '/127.0.0/d'
+}
+
+Readinput(){
+    TimePointA=`date +%H%M%S`
+    read -t "$1" "$2"
+    TimePointB=`date +%H%M%S`
+    if [ "`expr $TimePointB - $TimePointA`" = "$1" ]
+    then
+        echo -e "$3"
+        ftmp delete
+        exit 1
+    fi 
+}
+
+db_exec(){
+    if [ ! -z "$1" ]
+    then
+        $DB_Conn -s -e "$1" 2> /dev/null
+    else
+        echo -e "\033[1;31mError\033[0m: db_exec: require argument"
+        return 1
+    fi
+}
+
+log(){
+    $DB_Tool -h $DB_Host -u $DB_User -p$DB_Pswd -e "insert into $DB_TLog values(NULL,'$Realdate','$Realtime','$Realname','$Useripad','$1','$0','$2');" 2> /dev/null
+}
+
+Del_file(){
+    for files in "$@"
+    do 
+        if   [ -f "$files" ]
+        then
+            rm -rf $files
+        elif [ -d "$files" ]
+        then
+            echo -e "`msg_error`: $files is a directory"
+            return 1
+        fi 
+    done
+}
+
+Stringmthcol(){
+    awk '{for(i=1;i<=NF;i++)if($i~/'$1'/) print i}'
+}
+
+Stringmthkey(){
+    awk '{where = match('$1', '$2');if(where)print }'
+}
+
+Stringetmax(){
+	awk 'BEGIN{ORS="";OFS=""}{{for(i=1;i<=NF;i++)print" ",length($i), " "}print "\n"}'\
+	    | awk 'NR>0{for(i=1;i<=NF;i++)a[NR,i]=$i}END{for(j=1;j<=NF;j++){x=0;for(k=1;k<=NR;k++){x=a[k,j]>x?a[k,j]:x}printf x+2 FS}print ""}'
+}
+
+Stringetotal(){
+    awk '{s=0;for(i=0;i<=NF;i++)s=s+$i;s=s-$1;print s}'
+}
+
+Print_umw(){
+    for args in "$@"
+    do
+        case "$args" in
+            -num)
+                allnumber=`echo "$@" | awk -F '-num ' '{print $2}' | awk -F ' -str' '{print $1}'`
+                shift 1
+                ;;
+            -str)
+                allstring=`echo "$@" | awk -F '-str ' '{print $2}' | awk -F ' -tle' '{print $1}'`
+                shift 1
+                ;;
+			-tle)
+				havetitle=`echo "$@" | awk -F '-tle ' '{print $2}' | awk -F ' -col' '{print $1}'`
+				shift 1
+				;;
+            -col)
+                linecolor=`echo "$@" | awk -F '-col ' '{print $2}' | awk '{print $1}'`
+                shift 1
+                ;;
+        esac
+    done
+    
+    Prts="printf \033[${linecolor}m"
+    for Wtd_num in `echo $allnumber`
+    do 
+        Prts="$Prts%-"
+        Prts="$Prts${Wtd_num}s"
+    done
+    Prts="$Prts\033[0m\n"
+    $Prts $allstring
+}
