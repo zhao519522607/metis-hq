@@ -20,7 +20,7 @@ ftmp  create keymatch usr_auth usr_chio mth_auth chk_auth srv_info cmd_temp cmd_
 for argu in "$@"
 do
     case "$argu" in
-		-k|--sshkey)
+	-k|--sshkey)
             SKey="$2"
             if [ -z "$SKey" ]
             then
@@ -34,6 +34,16 @@ do
                 fi
             fi
 			shift 2
+            ;;
+	-U|--user)
+            Username="$2"
+            if [ -z "$Username" ]
+            then
+                echo "User can not be empty"
+                exit 1
+            fi
+            Check user atusr $Username "Error: only root user can specifiy a user name"
+            shift 2
             ;;
         -i|--info)
             if [ "$UID" != "0" ]
