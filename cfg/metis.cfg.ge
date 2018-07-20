@@ -62,10 +62,7 @@ else
 	fi
 fi
 
-#if [ -z "$Username" ]
-#then
-#    Username=`whoami`
-#fi 
+Username=""
 
 Realname=`who am i | awk '{print $1}'`
 Useripad=`who am i | awk -F '(' '{print $2}' | awk -F ')' '{print $1}'`
