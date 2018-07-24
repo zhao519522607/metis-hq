@@ -33,7 +33,7 @@ gt_mg_exec(){
 }
 
 gt_db_query(){
-    db_exec "set @myrow = 0;select (@myrow := @myrow + 1) as ID,EIP,IP,Hostname,Port,Login_users from $DB_TSrv where concat(IP,Hostname) like '%$Keywords%' and (EIP like '%$Keywords%' or IP like '%$Keywords%' or Hostname like '%$Keywords%')" > $mth_auth
+    db_exec "set @myrow = 0;select (@myrow := @myrow + 1) as ID,EIP,IP,Hostname,Port,Login_users from $DB_TSrv where concat(IP,Hostname) like '%$Keywords%' and (EIP like '%$Keywords%' or IP like '%$Keywords%' or Hostname like '%$Keywords%') order by Hostname" > $mth_auth
     Check file empty $mth_auth "Search: $Keywords: No results found"
 }
 
