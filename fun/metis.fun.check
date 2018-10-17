@@ -31,6 +31,19 @@ check(){
     fi 
 }
 
+checkuser(){
+    ssh -i $SKey $Username@a "grep $kuser /etc/passwd > /dev/null"
+    ar=$?
+    ssh -i $SKey $Username@b "grep $kuser /etc/passwd > /dev/null"
+    br=$?
+    ssh -i $SKey $Username@c "grep $kuser /etc/passwd > /dev/null"
+    cr=$?
+    if [ $ar -ne 0 -a $br -ne 0 -a $cr -ne 0 ]
+    then
+        echo "$kuser 用户名不对,请核对账号信息"
+        exit 1
+    fi
+}
 
 Check(){
     for Argus in "$@"
