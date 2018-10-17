@@ -62,7 +62,12 @@ else
 	fi
 fi
 
-Username=""
+Username=aa
+SKey=a_k
+Mail_to="mail"
+Start_day=$(date +%F)
+Cp_rsa=
+Hql_rsa=
 
 Realname=`who am i | awk '{print $1}'`
 Useripad=`who am i | awk -F '(' '{print $2}' | awk -F ')' '{print $1}'`
