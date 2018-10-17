@@ -15,7 +15,7 @@ include metis.fun.ge
 include metis.fun.gt
 include metis.fun.check
 
-ftmp  create keymatch usr_auth usr_chio mth_auth chk_auth srv_info cmd_temp cmd_list
+ftmp create keymatch usr_auth usr_chio mth_auth chk_auth srv_info cmd_temp cmd_list life_list
 
 for argu in "$@"
 do
@@ -34,6 +34,90 @@ do
                 fi
             fi
 			shift 2
+            ;;
+	-m|--manage)
+            kuser="$2"
+            Inc="$3"
+            Kip="$4"
+	    if [ -z "$kuser" -o -z "$Inc" -o -z "$Kip" ]
+	    then
+		 echo "参数为空,请输入参数"
+	         exit 1
+	    fi
+            End_day=$(date -d "-$Inc day ago" +%F)
+	    checkuser
+	    Bigday
+	    if [ $Inc -gt $Bday ]
+	    then
+		 ssh -i $SKey $Username@$Kip "chage -E $End_day hql"
+		 if [ $? == 0 ]
+		 then
+		     	Usermanage
+			#mail
+			echo "$kuser 权限已经开通"
+		 else
+			echo "命令执行有问题"
+			exit 1
+		 fi
+	     else
+		 echo "$Kip 权限已经存在"
+	     fi
+            ;;
+	-a|--account)
+            Sel_ip
+            S_num=$(echo $A_ip |awk '{print NF}')
+            if [ -z "$A_ip" ]
+            then
+                echo "No authority"
+            elif [ $S_num -eq 1 ]
+            then
+                echo "1  $A_ip"
+                if [ ! -f "$H_rsa" ]
+                then
+                    cp -r $Cp_rsa ~/.ssh
+                    chmod 400 $Hql_rsa
+                fi
+                ssh -i $Hql_rsa h@$A_ip
+            elif [ $S_num -gt 1 ]
+            then
+                count=1
+                for i in $A_ip
+                do
+                    echo "$count $i" >> $life_list
+                    let count=$count+1
+                done
+                cat $life_list
+                python -c "print '-' * 20"
+                echo -en  "$USER@metis: "
+                while true
+                do
+                    #echo "test"
+                    UINPUT="`RTInput`"
+                    if [ x$UINPUT = x ]
+                    then
+                        echo
+                        break
+                    fi
+                    USTRING="$USTRING$UINPUT"
+                    printf "$UINPUT"
+                    if [ $UINPUT = q ]
+                    then
+                        echo -e "\nGoodbye!"
+                        ftmp delete
+                        exit 0
+                    else
+                        check digit "$UINPUT" 1 exit 1 "\nError: Please input ID or q to quit"
+                    fi
+                done
+                Check input empty   "$USTRING"           "Error: No input detected"
+                check digit         "$USTRING" 1 exit 1  "Error: Number only"
+                Check input range   "$USTRING" $S_num    "Error: Input out of range. Total: $S_num, Input: $USTRING"
+                aip=$(grep "^$USTRING" $life_list |awk '{print $2}')
+                ftmp delete
+                echo -e "\n${FBold}Connecting to \033[34m$aip\033[0m(Welcome)..."
+                log info "(ID $USTRING of $S_num: user-input) matched server:$aip, logging"
+                ssh -i $H h@$aip
+            fi
             ;;
 	-U|--user)
             Username="$2"
