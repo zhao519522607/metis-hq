@@ -82,6 +82,36 @@ log(){
     $DB_Tool -h $DB_Host -u $DB_User -p$DB_Pswd -e "insert into $DB_TLog values(NULL,'$Realdate','$Realtime','$Realname','$Useripad','$1','$0','$2');" 2> /dev/null
 }
 
+mail(){
+    /usr/local/bin/sendEmail -f aa -t $Mail_to -s smtp -o message-charset=utf-8 -xu aa -xp xdfdf -u "期限账号权限开通提醒" -m "$kuser open $Inc days for $Kip"
+}
+
+Usermanage(){
+    db_exec "insert into aa.h values(NULL,'$kuser','$Kip','$Start_day','$End_day');"
+}
+
+Bigday() {
+    Bday=$(db_exec "SELECT DATEDIFF(Etime,Stime) as t from aa.h WHERE IP='$Kip' and Etime>'$Start_day' order by t DESC LIMIT 1;")
+    if [ -z "$Bday" ]
+    then
+        ssh -i $SKey $Username@$Kip "chage -E $End_day hql"
+        if [ $? == 0 ]
+        then
+            Usermanage
+            #mail
+            echo "$kuser 权限已经开通"
+            exit 0
+        else
+            echo "命令执行有问题"
+            exit 1
+        fi
+    fi
+}
+
+Sel_ip(){
+        A_ip=$(db_exec "select IP from aa.h where \`USER\`='$Realname' and Etime>='$Start_day';")
+}
+
 Del_file(){
     for files in "$@"
     do 
