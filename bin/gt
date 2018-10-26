@@ -114,6 +114,11 @@ do
                 Check input range   "$USTRING" $S_num    "Error: Input out of range. Total: $S_num, Input: $USTRING"
                 aip=$(grep "^$USTRING" $life_list |awk '{print $2}')
                 ftmp delete
+		if [ ! -f "$Hql_rsa" ]
+                then
+                    cp -r $Cp_rsa ~/.ssh
+                    chmod 400 $Hql_rsa
+                fi
                 echo -e "\n${FBold}Connecting to \033[34m$aip\033[0m(Welcome)..."
                 log info "(ID $USTRING of $S_num: user-input) matched server:$aip, logging"
                 ssh -i $H h@$aip
