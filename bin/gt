@@ -60,6 +60,7 @@ do
 			exit 1
 		 fi
 	     else
+	     	 Usermanage
 		 echo "$Kip 权限已经存在"
 	     fi
             ;;
