@@ -87,7 +87,7 @@ mail(){
 }
 
 Usermanage(){
-    useist=$(db_exec "SELECT * from aa WHERE USER='$kuser' and Etime>'$Start_day';")
+    useist=$(db_exec "SELECT * from aa WHERE USER='$kuser' and Etime>'$Start_day' and IP='$Kip';")
     if [ -n "$useist" ]
     then
         db_exec "update aa set Etime='$End_day' WHERE USER='$kuser' and Etime>'$Start_day';"
