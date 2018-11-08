@@ -113,7 +113,7 @@ do
                 Check input empty   "$USTRING"           "Error: No input detected"
                 check digit         "$USTRING" 1 exit 1  "Error: Number only"
                 Check input range   "$USTRING" $S_num    "Error: Input out of range. Total: $S_num, Input: $USTRING"
-                aip=$(grep "^$USTRING" $life_list |awk '{print $2}')
+                aip=$(grep "^$USTRING " $life_list |awk '{print $2}')
                 ftmp delete
 		if [ ! -f "$Hql_rsa" ]
                 then
