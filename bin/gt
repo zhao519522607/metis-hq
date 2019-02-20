@@ -47,7 +47,7 @@ do
             End_day=$(date -d "-$Inc day ago" +%F)
 	    checkuser
 	    Bigday
-	    if [ $Inc -gt $Bday ]
+	    if [ $Inc -ge $Bday ]
 	    then
 		 ssh -i $SKey $Username@$Kip "chage -E $End_day hql"
 		 if [ $? == 0 ]
