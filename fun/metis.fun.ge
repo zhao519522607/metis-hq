@@ -111,6 +111,8 @@ Bigday() {
             echo "命令执行有问题"
             exit 1
         fi
+    #else
+    #   echo "机器周期权限已存在"
     fi
 }
 
