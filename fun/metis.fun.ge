@@ -120,6 +120,10 @@ Sel_ip(){
         A_ip=$(db_exec "select IP from aa.h where \`USER\`='$Realname' and Etime>='$Start_day';")
 }
 
+Sel_hostname(){
+        hs_name=$(db_exec "SELECT Hostname from res_stat.server WHERE IP='$1';")
+}
+
 Del_file(){
     for files in "$@"
     do 
