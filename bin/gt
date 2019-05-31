@@ -138,6 +138,10 @@ do
             Check user atusr $Username "Error: only root user can specifiy a user name"
             shift 2
             ;;
+        -D|--delete)
+            Choice_ip="$2"
+            Del_host $Choice_ip
+            ;;
         -i|--info)
             if [ "$UID" != "0" ]
             then
