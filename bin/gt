@@ -84,11 +84,14 @@ do
                 count=1
                 for i in $A_ip
                 do
-                    echo "$count $i" >> $life_list
-                    let count=$count+1
+                    Sel_hostname $i
+                    if [ -n "$hs_name" ];then
+                        echo "$count $i $hs_name" >> $life_list
+                        let count=$count+1
+                    fi
                 done
                 cat $life_list
-                python -c "print '-' * 20"
+                python -c "print '-' * 25"
                 echo -en  "$USER@metis: "
                 while true
                 do
@@ -216,7 +219,7 @@ do
             gt_db_search
             Check file empty $keymatch "Error: No results found"
             gt_print_results
-            python -c "print '-' * 30"
+            python -c "print '-' * 35"
             #Rangenum="`cat $keymatch | sed '1d' | wc -l`"
 			Rangenum="`cat $keymatch | wc -l`"
             if [ "$Rangenum" = 1 ]
