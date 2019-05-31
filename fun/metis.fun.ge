@@ -78,6 +78,17 @@ db_exec(){
     fi
 }
 
+Del_host() {
+    host_ip=$(db_exec "SELECT IP from res_stat.server WHERE IP='$1';")
+    host_num=$(echo $host_ip |awk '{print NF}')
+    if [ $host_num -eq 1 ];then
+        db_exec "DELETE from res_stat.server WHERE IP='$host_ip';"
+        echo "$host_ip 删除完成"
+    else
+        echo "匹配项过多无法执行删除"
+    fi
+}
+
 log(){
     $DB_Tool -h $DB_Host -u $DB_User -p$DB_Pswd -e "insert into $DB_TLog values(NULL,'$Realdate','$Realtime','$Realname','$Useripad','$1','$0','$2');" 2> /dev/null
 }
