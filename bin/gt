@@ -221,7 +221,7 @@ do
             gt_print_results
             python -c "print '-' * 35"
             #Rangenum="`cat $keymatch | sed '1d' | wc -l`"
-			Rangenum="`cat $keymatch | wc -l`"
+	    Rangenum="`cat $keymatch | wc -l`"
             if [ "$Rangenum" = 1 ]
             then
                 usr_input=1
